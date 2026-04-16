@@ -1374,3 +1374,76 @@ body.dark .event-meta-item p {
 body.dark .event-details p {
   color: #cbd5f5;
 }
+.card {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+.card h3 {
+  color: #111827 !important;
+}
+
+.card p,
+.card span,
+.card div {
+  color: #374151 !important;
+  opacity: 1 !important;
+}
+.card .meta {
+  color: #374151 !important;
+}
+
+.event-details {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+.event-details h1 {
+  color: #111827 !important;
+}
+
+.event-meta p,
+.event-meta span {
+  color: #374151 !important;
+  opacity: 1 !important;
+}
+
+body.dark .card {
+  background: #1e293b !important;
+  color: #e5e7eb !important;
+}
+
+body.dark .card h3 {
+  color: #ffffff !important;
+}
+
+body.dark .card p,
+body.dark .card span {
+  color: #cbd5f5 !important;
+}
+
+body.dark .event-details {
+  background: #0f172a !important;
+}
+
+body.dark .event-details h1 {
+  color: #ffffff !important;
+}
+
+body.dark .event-meta p {
+  color: #cbd5f5 !important;
+}
+
+.card *,
+.event-details * {
+  opacity: 1 !important;
+}
+
+.card {
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  transition: 0.3s ease;
+}
