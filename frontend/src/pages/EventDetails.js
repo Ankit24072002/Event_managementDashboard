@@ -102,7 +102,9 @@ function EventDetails() {
 
       <div style={{ textAlign: "center", marginTop: "20px" }}>
         {isRegistered ? (
-          <p>✅ Already Registered</p>
+          <div className="registered-badge">
+  ✅ Already Registered
+</div>
         ) : isFull ? (
           <p>🚫 Event Full</p>
         ) : (
