@@ -74,6 +74,20 @@ function Dashboard() {
     }
   };
 
+  // ✅ DELETE FUNCTION ADDED
+  const deleteEvent = async (id) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this event?");
+    if (!confirmDelete) return;
+
+    try {
+      await api.delete(`/events/${id}`);
+
+      setEvents((prev) => prev.filter((event) => event._id !== id));
+    } catch (err) {
+      alert("Failed to delete event");
+    }
+  };
+
   if (role === "organizer") {
     const myEvents = events.filter(
       (event) => event.createdBy?._id === userId || event.createdBy === userId
@@ -130,6 +144,7 @@ function Dashboard() {
                 />
               </div>
             </div>
+
             <div className="form-group">
               <label>Description</label>
               <input
@@ -139,6 +154,7 @@ function Dashboard() {
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
+
             <div className="form-row">
               <div className="form-group">
                 <label>Date & Time</label>
@@ -149,6 +165,7 @@ function Dashboard() {
                   required
                 />
               </div>
+
               <div className="form-group">
                 <label>Capacity</label>
                 <input
@@ -160,6 +177,7 @@ function Dashboard() {
                 />
               </div>
             </div>
+
             <button type="submit" className="btn" disabled={loading}>
               {loading ? "Creating..." : "Create Event"}
             </button>
@@ -167,6 +185,7 @@ function Dashboard() {
         </div>
 
         <h2 style={{ color: "white", marginTop: "40px" }}>📅 Your Events</h2>
+
         {myEvents.length === 0 ? (
           <div className="empty-state">
             <h3>No events created yet</h3>
@@ -175,21 +194,40 @@ function Dashboard() {
         ) : (
           myEvents.map((event) => (
             <div key={event._id} className="card">
-              <h3>{event.title}</h3>
+
+              {/* ONLY THIS PART MODIFIED */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3>{event.title}</h3>
+
+                <button
+                  onClick={() => deleteEvent(event._id)}
+                  style={{
+                    background: "rgba(239,68,68,0.2)",
+                    color: "#ef4444",
+                    border: "none",
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    cursor: "pointer"
+                  }}
+                >
+                  🗑️
+                </button>
+              </div>
+
               <p>{event.description}</p>
+
               <div className="meta">
                 <div>
                   <p><strong>📅 Date:</strong> {new Date(event.date).toLocaleString()}</p>
                   <p><strong>📍 Location:</strong> {event.location}</p>
                   <p><strong>👥 Capacity:</strong> {event.capacity || "Unlimited"}</p>
                 </div>
+
                 <div className="registrations">
-                  {(() => {
-                    const count = event.registrationsCount ?? event.registrations?.length ?? 0;
-                    return count;
-                  })()} registered
+                  {event.registrationsCount ?? event.registrations?.length ?? 0} registered
                 </div>
               </div>
+
             </div>
           ))
         )}
@@ -212,7 +250,9 @@ function Dashboard() {
       </div>
 
       <h2 style={{ color: "white", marginTop: "40px" }}>🎫 My Registered Events</h2>
+
       {error && <div className="error">{error}</div>}
+
       {registrations.length === 0 ? (
         <div className="empty-state">
           <h3>No registrations yet</h3>
@@ -223,12 +263,14 @@ function Dashboard() {
           <div key={registration._id} className="card">
             <h3>{registration.event?.title}</h3>
             <p>{registration.event?.description}</p>
+
             <div className="meta">
               <div>
                 <p><strong>📅 Date:</strong> {new Date(registration.event?.date).toLocaleString()}</p>
                 <p><strong>📍 Location:</strong> {registration.event?.location}</p>
                 <p><strong>👤 Organizer:</strong> {registration.event?.createdBy?.name}</p>
               </div>
+
               <div style={{ background: "linear-gradient(45deg, #48bb78, #38a169)", color: "white", padding: "4px 12px", borderRadius: "15px", fontWeight: "bold" }}>
                 Registered
               </div>

@@ -35,33 +35,14 @@ function Notifications() {
     }
   };
 
-  const markAllAsRead = async () => {
-    try {
-      await api.patch("/notifications/read-all");
-      setNotifications((prev) => prev.map((note) => ({ ...note, read: true })));
-      window.dispatchEvent(new CustomEvent("notificationsUpdated", { detail: 0 }));
-    } catch (err) {
-      console.error("Failed to mark all as read", err);
-    }
-  };
-
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
   if (loading) return <div className="loading">Loading notifications...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
     <div>
       <div className="dashboard-header">
-        <div>
-          <h1>🔔 Notifications</h1>
-          <p>Stay informed about new events and registration updates</p>
-        </div>
-        {unreadCount > 0 && (
-          <button className="btn btn-secondary" onClick={markAllAsRead}>
-            Mark all as read
-          </button>
-        )}
+        <h1>🔔 Notifications</h1>
+        <p>Stay informed about new events and registration updates</p>
       </div>
 
       {notifications.length === 0 ? (

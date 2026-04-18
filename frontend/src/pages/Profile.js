@@ -6,11 +6,19 @@ import "./Profile.css";
 
 function Profile() {
   const { role, userId, name, logout } = useContext(AuthContext);
+
   const [registrations, setRegistrations] = useState([]);
   const [myEvents, setMyEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [formData, setFormData] = useState({ name: name || "" });
+
+  const [formData, setFormData] = useState({
+    name: name || "",
+    bio: "",
+    profilePic: null,
+  });
+
+  const [preview, setPreview] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -19,151 +27,190 @@ function Profile() {
   const fetchData = async () => {
     try {
       setLoading(true);
+
       const regRes = await api.get("/registrations/mine");
-      // Fetch event details for each registration
-      const eventPromises = regRes.data.map(reg => 
+
+      const eventPromises = regRes.data.map((reg) =>
         api.get(`/events/${reg.event}`)
       );
+
       const eventResponses = await Promise.all(eventPromises);
+
       const registrationsWithEvents = regRes.data.map((reg, index) => ({
         ...reg,
-        event: eventResponses[index].data
+        event: eventResponses[index].data,
       }));
+
       setRegistrations(registrationsWithEvents);
 
       if (role === "organizer") {
         const eventsRes = await api.get("/events");
-        setMyEvents(eventsRes.data.filter(e => e.createdBy === userId));
+        setMyEvents(
+          eventsRes.data.filter((e) => e.createdBy === userId)
+        );
       }
     } catch (err) {
-      toast.error("Failed to load profile data");
+      toast.error("Failed to load profile");
     } finally {
       setLoading(false);
     }
   };
 
+  // IMAGE UPLOAD
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, profilePic: file });
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // UPDATE PROFILE
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     try {
-      await api.put("/auth/profile", formData);
+      const data = new FormData();
+      data.append("name", formData.name);
+      data.append("bio", formData.bio);
+
+      if (formData.profilePic) {
+        data.append("profilePic", formData.profilePic);
+      }
+
+      await api.put("/auth/profile", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
       toast.success("Profile updated!");
       setEditing(false);
       localStorage.setItem("name", formData.name);
     } catch (err) {
-      toast.error("Failed to update profile");
+      toast.error("Update failed");
     }
   };
 
-  const exportToCSV = () => {
-    const data = registrations.map(reg => ({
-      Event: reg.event?.title || "Unknown",
-      Date: reg.event?.date ? new Date(reg.event.date).toLocaleDateString() : "N/A",
-      Location: reg.event?.location || "N/A",
-      Registered: new Date(reg.createdAt).toLocaleDateString()
-    }));
-
-    const csv = [
-      ["Event", "Date", "Location", "Registered"],
-      ...data.map(row => Object.values(row))
-    ].map(row => row.join(",")).join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "my-registrations.csv";
-    a.click();
-  };
-
   if (loading) {
-    return <div className="profile-loading">Loading profile...</div>;
+    return <div className="loading">Loading profile...</div>;
   }
 
   return (
     <div className="profile-container">
-      <div className="profile-header">
-        <div className="profile-avatar">
-          {name?.charAt(0).toUpperCase()}
+
+      {/* COVER */}
+      <div className="profile-cover"></div>
+
+      {/* PROFILE CARD */}
+      <div className="profile-card">
+
+        {/* AVATAR */}
+        <div className="avatar-wrapper">
+          {preview ? (
+            <img src={preview} alt="profile" />
+          ) : (
+            <div className="avatar-fallback">
+              {name?.charAt(0).toUpperCase()}
+            </div>
+          )}
+
+          {editing && (
+            <label className="upload-btn">
+              Change
+              <input type="file" onChange={handleImageChange} hidden />
+            </label>
+          )}
         </div>
+
+        {/* INFO */}
         <div className="profile-info">
           {editing ? (
-            <form onSubmit={handleUpdateProfile} className="edit-form">
+            <form onSubmit={handleUpdateProfile}>
+
               <input
-                type="text"
+                className="input"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Your name"
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
               />
-              <div className="edit-actions">
-                <button type="submit" className="btn-save">Save</button>
-                <button type="button" onClick={() => setEditing(false)} className="btn-cancel">Cancel</button>
+
+              <textarea
+                className="textarea"
+                placeholder="Write your bio..."
+                value={formData.bio}
+                onChange={(e) =>
+                  setFormData({ ...formData, bio: e.target.value })
+                }
+              />
+
+              <div className="btn-group">
+                <button className="btn save">Save</button>
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="btn cancel"
+                >
+                  Cancel
+                </button>
               </div>
+
             </form>
           ) : (
             <>
               <h2>{name}</h2>
-              <span className="role-badge">{role}</span>
-              <button onClick={() => setEditing(true)} className="btn-edit">Edit Profile</button>
+              <span className="badge">{role}</span>
+
+              <button className="btn edit" onClick={() => setEditing(true)}>
+                Edit Profile
+              </button>
             </>
           )}
         </div>
       </div>
 
-      <div className="profile-stats">
-        <div className="stat-card">
-          <span className="stat-number">{registrations.length}</span>
-          <span className="stat-label">Events Joined</span>
+      {/* PROGRESS */}
+      <div className="progress-card">
+        <p>Profile Activity</p>
+        <div className="progress-bar">
+          <div
+            className="progress-fill"
+            style={{
+              width: `${Math.min(registrations.length * 20, 100)}%`,
+            }}
+          ></div>
         </div>
+      </div>
+
+      {/* STATS */}
+      <div className="profile-stats">
+        <div className="stat-card glow">
+          <h2>{registrations.length}</h2>
+          <p>Events Joined</p>
+        </div>
+
         {role === "organizer" && (
-          <div className="stat-card">
-            <span className="stat-number">{myEvents.length}</span>
-            <span className="stat-label">Events Created</span>
+          <div className="stat-card glow">
+            <h2>{myEvents.length}</h2>
+            <p>Events Created</p>
           </div>
         )}
       </div>
 
-      {registrations.length > 0 && (
-        <div className="profile-section">
-          <div className="section-header">
-            <h3>My Registrations</h3>
-            <button onClick={exportToCSV} className="btn-export">Export CSV</button>
-          </div>
-          <div className="registrations-list">
-            {registrations.map((reg) => (
-              <div key={reg._id} className="registration-card">
-                <div className="reg-event-info">
-                  <h4>{reg.event?.title}</h4>
-                  <p>{reg.event?.location} • {reg.event?.date && new Date(reg.event.date).toLocaleDateString()}</p>
-                </div>
-                <span className="reg-date">
-                  Registered on {new Date(reg.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* TIMELINE */}
+      <div className="profile-section">
+        <h3>My Activity</h3>
 
-      {role === "organizer" && myEvents.length > 0 && (
-        <div className="profile-section">
-          <h3>My Created Events</h3>
-          <div className="my-events-list">
-            {myEvents.map((event) => (
-              <div key={event._id} className="my-event-card">
-                <div className="event-info">
-                  <h4>{event.title}</h4>
-                  <p>{event.location} • {new Date(event.date).toLocaleDateString()}</p>
-                </div>
-                <div className="event-stats">
-                  <span>{event.registrationsCount || 0} / {event.capacity} spots</span>
-                </div>
-              </div>
-            ))}
+        {registrations.map((reg) => (
+          <div key={reg._id} className="timeline-item">
+            <h4>{reg.event?.title}</h4>
+            <p>{reg.event?.location}</p>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
 
-      <button onClick={logout} className="btn-logout">Logout</button>
+      {/* LOGOUT */}
+      <button onClick={logout} className="btn-logout">
+        Logout
+      </button>
     </div>
   );
 }
