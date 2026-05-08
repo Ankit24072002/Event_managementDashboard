@@ -13,13 +13,29 @@ mongoose.set("strictQuery", true);
 const connectDB = require("./config/db");
 
 const app = express();
-app.use(cors({ origin: ["http://localhost:3000"], credentials: true }));
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",").map((origin) => origin.trim())
+  : ["http://localhost:3000"];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked by server: ${origin}`));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000"],
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE"],
   },
 });
