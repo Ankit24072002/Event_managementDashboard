@@ -54,8 +54,8 @@ npm start
 
 ## 🌐 App URLs
 
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
+- **Frontend**: http://localhost:3000 (https://event-managementdashboard-2.onrender.com)
+- **Backend API**: http://localhost:5000 (https://event-managementdashboard-1.onrender.com)
 
 ## 📱 User Guide
 
